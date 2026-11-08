@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>研究笔记生成器</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230f766e'/%3E%3Cpath d='M7 5h8l3 3v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z' fill='none' stroke='white' stroke-width='1.6'/%3E%3Cpath d='M9 11h6M9 14h6M9 17h4' stroke='white' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --primary:#0f766e;
+    --primary-dark:#0d5d56;
+    --primary-soft:#e6f3f1;
+    --ink:#1f2937;
+    --ink-sub:#6b7280;
+    --line:#d9dedc;
+    --bg:#f3f5f4;
+    --card:#ffffff;
+    --warn:#b45309;
+    --danger:#b91c1c;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Segoe UI",sans-serif;
+    font-size:15px;
+    line-height:1.6;
+    padding-bottom:96px;
+  }
+  /* ===== 顶部 ===== */
+  header.top{
+    background:var(--primary);
+    color:#fff;
+    padding:22px 20px 18px;
+  }
+  .top-inner{max-width:980px;margin:0 auto;}
+  header.top h1{margin:0;font-size:22px;font-weight:700;letter-spacing:.5px;}
+  header.top p{margin:6px 0 0;font-size:13px;opacity:.85;}
+  /* ===== Tab ===== */
+  .tabs{
+    max-width:980px;margin:18px auto 0;padding:0 16px;
+    display:flex;gap:10px;
+  }
+  .tab-btn{
+    flex:1;
+    padding:12px 10px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    font-size:15px;font-weight:600;
+    color:var(--ink-sub);
+    cursor:pointer;
+    transition:all .15s;
+    font-family:inherit;
+  }
+  .tab-btn .tab-no{
+    display:inline-block;width:20px;height:20px;line-height:20px;
+    border-radius:50%;background:#e5e7eb;color:#6b7280;
+    font-size:12px;margin-right:8px;
+  }
+  .tab-btn.active{
+    border-color:var(--primary);
+    color:var(--primary);
+    background:var(--primary-soft);
+  }
+  .tab-btn.active .tab-no{background:var(--primary);color:#fff;}
+  /* ===== 表单主体 ===== */
+  main{max-width:980px;margin:18px auto 0;padding:0 16px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 18px 20px;
+    margin-bottom:16px;
+  }
+  .card-title{
+    display:flex;align-items:center;gap:9px;
+    font-size:16px;font-weight:700;color:var(--primary-dark);
+    margin:0 0 14px;padding-bottom:10px;
+    border-bottom:1px solid var(--line);
+  }
+  .card-title .idx{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:22px;height:22px;border-radius:6px;
+    background:var(--primary);color:#fff;font-size:13px;
+  }
+  .field{margin-bottom:14px;min-width:0;}
+  .field:last-child{margin-bottom:0;}
+  .field > label,.field-label{
+    display:block;font-size:13.5px;font-weight:600;
+    color:var(--ink);margin-bottom:5px;
+  }
+  .hint{font-size:12.5px;color:var(--ink-sub);font-weight:400;margin-left:6px;}
+  input[type=text],textarea{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:9px 11px;
+    font-size:14.5px;
+    font-family:inherit;
+    color:var(--ink);
+    background:#fcfdfd;
+    transition:border-color .15s,box-shadow .15s;
+  }
+  input[type=text]{font-size:15px;}
+  textarea{resize:vertical;line-height:1.65;min-height:74px;}
+  textarea.code-area{
+    font-family:Consolas,"Courier New",monospace;
+    font-size:13.5px;min-height:110px;
+    background:#f8faf9;
+  }
+  input:focus,textarea:focus{
+    outline:none;border-color:var(--primary);
+    box-shadow:0 0 0 3px rgba(15,118,110,.12);
+    background:#fff;
+  }
+  .grid-2{display:grid;grid-template-columns:1fr;gap:0 16px;}
+  @media(min-width:760px){.grid-2{grid-template-columns:1fr 1fr;}}
+  /* 可修改的小标签输入框 */
+  .mini-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+  .mini-row input{
+    flex:1 1 140px;min-width:0;
+    padding:7px 10px;font-size:13.5px;font-weight:600;
+    color:var(--primary-dark);
+    background:var(--primary-soft);
+    border-color:#c4ddd9;
+  }
+  .repeat-item{
+    position:relative;
+    border:1px dashed var(--line);
+    border-radius:8px;
+    padding:12px 38px 10px 12px;
+    margin-bottom:12px;
+    background:#fbfcfc;
+  }
+  .repeat-item:last-child{margin-bottom:0;}
+  .repeat-item .mini-row{margin-bottom:8px;}
+  /* 删除按钮 */
+  .del-btn{
+    position:absolute;top:8px;right:8px;
+    width:28px;height:28px;border-radius:7px;
+    border:1px solid var(--line);background:#fff;color:#9ca3af;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    padding:0;
+  }
+  .del-btn:hover{color:var(--danger);border-color:#e0b0b0;background:#fdf3f3;}
+  /* 添加按钮 */
+  .add-btn{
+    display:block;width:100%;margin-top:4px;
+    border:1px dashed #9ab8b3;background:#f7fbfa;
+    color:var(--primary);border-radius:8px;
+    padding:10px;font-size:14px;font-weight:600;cursor:pointer;
+    font-family:inherit;
+  }
+  .add-btn:hover{background:var(--primary-soft);border-color:var(--primary);}
+  /* 分段单选 */
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .seg input{position:absolute;opacity:0;pointer-events:none;}
+  .seg label{
+    padding:7px 16px;font-size:13.5px;font-weight:600;
+    color:var(--ink-sub);background:#fff;cursor:pointer;
+    border-right:1px solid var(--line);user-select:none;
+  }
+  .seg label:last-child{border-right:none;}
+  .seg input:checked + label{background:var(--primary);color:#fff;}
+  .seg input:focus-visible + label{box-shadow:inset 0 0 0 2px var(--primary-dark);}
+  .inline-code{display:grid;grid-template-columns:1fr;gap:12px;}
+  @media(min-width:760px){.inline-code{grid-template-columns:1fr 1fr;align-items:start;}}
+  /* ===== 底部操作栏 ===== */
+  .action-bar{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;
+    background:rgba(255,255,255,.96);
+    border-top:1px solid var(--line);
+    backdrop-filter:blur(6px);
+  }
+  .action-inner{
+    max-width:980px;margin:0 auto;
+    padding:12px 16px;
+    display:flex;flex-wrap:wrap;gap:9px;align-items:center;
+  }
+  .btn{
+    border:none;border-radius:8px;
+    padding:10px 16px;font-size:14px;font-weight:600;
+    cursor:pointer;font-family:inherit;
+    transition:background .15s,transform .05s;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover{background:var(--primary-dark);}
+  .btn-ghost{background:#fff;color:var(--primary);border:1px solid var(--primary);}
+  .btn-ghost:hover{background:var(--primary-soft);}
+  .btn-plain{background:#eef0ef;color:var(--ink);}
+  .btn-plain:hover{background:#e2e5e4;}
+  .btn-danger{background:#fff;color:var(--danger);border:1px solid #e5b4b4;}
+  .btn-danger:hover{background:#fdf0f0;}
+  .save-state{font-size:12.5px;color:var(--ink-sub);margin-left:auto;}
+  /* ===== 弹窗 ===== */
+  .modal-mask{
+    display:none;position:fixed;inset:0;z-index:100;
+    background:rgba(17,24,39,.55);
+    padding:30px 14px;overflow:auto;
+  }
+  .modal-mask.show{display:block;}
+  .modal{
+    max-width:900px;margin:0 auto;background:#fff;
+    border-radius:var(--radius);padding:20px 22px;
+  }
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .modal-head h3{margin:0;font-size:17px;color:var(--primary-dark);}
+  .modal-close{
+    width:34px;height:34px;border-radius:8px;border:1px solid var(--line);
+    background:#fff;cursor:pointer;font-size:17px;color:var(--ink-sub);
+  }
+  .preview-box{border:1px solid var(--line);border-radius:8px;padding:14px;overflow:auto;max-height:62vh;}
+  .preview-box table{font-size:13.5px;}
+  .modal-foot{margin-top:14px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+  /* ===== Toast ===== */
+  #toast{
+    position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);
+    background:#1f2937;color:#fff;padding:10px 20px;border-radius:8px;
+    font-size:13.5px;opacity:0;pointer-events:none;transition:all .25s;z-index:200;
+    max-width:88vw;text-align:center;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media(max-width:560px){
+    body{font-size:14px;padding-bottom:130px;}
+    .btn{flex:1 1 auto;padding:10px 10px;}
+    .save-state{flex-basis:100%;margin-left:0;text-align:center;}
+    header.top h1{font-size:19px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <h1>研究笔记生成器</h1>
+    <p>按模板填写内容，一键生成「文献阅读笔记」与「代码复现记录」两个 Markdown 文件，内容自动保存在本机浏览器中。</p>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="lit" type="button"><span class="tab-no">1</span>文献阅读笔记</button>
+  <button class="tab-btn" data-tab="rep" type="button"><span class="tab-no">2</span>代码复现记录</button>
+</nav>
+
+<main>
+<!-- ==================== 面板一：文献阅读笔记 ==================== -->
+<section class="panel active" id="panel-lit">
+
+  <div class="card">
+    <h2 class="card-title"><span class="idx">1</span>基础信息</h2>
+    <div class="field">
+      <label for="lit-title">标题</label>
+      <input type="text" id="lit-title" data-field="lit.title" placeholder="论文完整标题">
+    </div>
+    <div class="field">
+      <label for="lit-abstract">摘要复述</label>
+      <textarea id="lit-abstract" data-field="lit.abstract" rows="4" placeholder="用自己的话复述论文摘要"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title"><span class="idx">2</span>引言</h2>
+    <div class="grid-2">
+      <div class="field">
+        <label for="lit-bg">背景</label>
+        <textarea id="lit-bg" data-field="lit.bg" rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label for="lit-prob">问题</label>
+        <textarea id="lit-prob" data-field="lit.prob" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="field">
+      <label for="lit-contrib">贡献</label>
+      <textarea id="lit-contrib" data-field="lit.contrib" rows="3"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title"><span class="idx">3</span>相关工作</h2>
+    <div class="repeat-item" data-group="lit.rel">
+      <div class="mini-row">
+        <input type="text" data-label="view" value="观点1" aria-label="观点名称">
+        <input type="text" data-label="ref" value="文献条目" aria-label="文献条目名称">
+      </div>
+      <textarea data-label="content" rows="2"></textarea>
+    </div>
+    <div class="repeat-item" data-group="lit.rel">
+      <div class="mini-row">
+        <input type="text" data-label="view" value="观点2" aria-label="观点名称">
+        <input type="text" data-label="ref" value="文献条目" aria-label="文献条目名称">
+      </div>
+      <textarea data-label="content" rows="2"></textarea>
+    </div>
+    <div class="repeat-item" data-group="lit.rel">
+      <div class="mini-row">
+        <input type="text" data-label="view" value="观点3" aria-label="观点名称">
+        <input type="text" data-label="ref" value="文献条目" aria-label="文献条目名称">
+      </div>
+      <textarea data-label="content" rows="2"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title"><span class="idx">4</span>方法</h2>
+    <div class="field">
+      <label for="lit-kp">知识点</label>
+      <textarea id="lit-kp" data-field="lit.kp" rows="3"></textarea>
+    </div>
+    <div class="repeat-item" data-group="lit.method">
+      <div class="mini-row">
+        <input type="text" data-label="name" value="新方法1" aria-label="新方法名称">
+      </div>
+      <div class="field">
+        <label>算法流程</label>
+        <textarea data-label="algo" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label>原理推导</label>
+        <textarea data-label="theory" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="repeat-item" data-group="lit.method">
+      <div class="mini-row">
+        <input type="text" data-label="name" value="新方法2" aria-label="新方法名称">
+      </div>
+      <div class="field">
+        <label>算法流程</label>
+        <textarea data-label="algo" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label>原理推导</label>
+        <textarea data-label="theory" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="repeat-item" data-group="lit.method">
+      <div class="mini-row">
+        <input type="text" data-label="name" value="新方法3" aria-label="新方法名称">
+      </div>
+      <div class="field">
+        <label>算法流程</label>
+        <textarea data-label="algo" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label>原理推导</label>
+        <textarea data-label="theory" rows="2"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title"><span class="idx">5</span>实验</h2>
+    <div class="grid-2">
+      <div class="field">
+        <label for="lit-metric">指标</label>
+        <textarea id="lit-metric" data-field="lit.metric" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label for="lit-dataset">数据集</label>
+        <textarea id="lit-dataset" data-field="lit.dataset" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="repeat-item" data-group="lit.exp">
+      <div class="mini-row">
+        <input type="text" data-label="view" value="观点1" aria-label="观点名称">
+        <input type="text" data-label="evidence" value="证据" aria-label="证据名称">
+      </div>
+      <textarea data-label="content" rows="2"></textarea>
+    </div>
+    <div class="repeat-item" data-group="lit.exp">
+      <div class="mini-row">
+        <input type="text" data-label="view" value="观点2" aria-label="观点名称">
+        <input type="text" data-label="evidence" value="证据" aria-label="证据名称">
+      </div>
+      <textarea data-label="content" rows="2"></textarea>
+    </div>
+    <div class="repeat-item" data-group="lit.exp">
+      <div class="mini-row">
+        <input type="text" data-label="view" value="观点3" aria-label="观点名称">
+        <input type="text" data-label="evidence" value="证据" aria-label="证据名称">
+      </div>
+      <textarea data-label="content" rows="2"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title"><span class="idx">6</span>结论</h2>
+    <div class="grid-2">
+      <div class="field">
+        <label for="lit-innov">创新点</label>
+        <textarea id="lit-innov" data-field="lit.innov" rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label for="lit-limit">不足</label>
+        <textarea id="lit-limit" data-field="lit.limit" rows="3"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title"><span class="idx">7</span>补充信息</h2>
+    <div class="field">
+      <label for="lit-unread">未读文献</label>
+      <textarea id="lit-unread" data-field="lit.unread" rows="2"></textarea>
+    </div>
+    <div class="field">
+      <label for="lit-code-link">代码链接</label>
+      <input type="text" id="lit-code-link" data-field="lit.codeLink" placeholder="https://github.com/...">
+    </div>
+    <div class="field">
+      <span class="field-label">代码复现状态</span>
+      <div class="seg" data-seg="lit.codeStatus">
+        <input type="radio" name="lit-code-status" id="lit-code-done" value="done"><label for="lit-code-done">已复现</label>
+        <input type="radio" name="lit-code-status" id="lit-code-undone" value="undone"><label for="lit-code-undone">未复现</label>
+        <input type="radio" name="lit-code-status" id="lit-code-none" value=""><label for="lit-code-none">未标记</label>
+      </div>
+    </div>
+    <div class="field">
+      <label for="lit-fig-path">图存放位置</label>
+      <input type="text" id="lit-fig-path" data-field="lit.figPath">
+    </div>
+    <div class="field">
+      <span class="field-label">图复现状态</span>
+      <div class="seg" data-seg="lit.figStatus">
+        <input type="radio" name="lit-fig-status" id="lit-fig-done" value="done"><label for="lit-fig-done">已复现</label>
+        <input type="radio" name="lit-fig-status" id="lit-fig-undone" value="undone"><label for="lit-fig-undone">未复现</label>
+        <input type="radio" name="lit-fig-status" id="lit-fig-none" value="" checked><label for="lit-fig-none">未标记</label>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ==================== 面板二：代码复现记录 ==================== -->
+<section class="panel" id="panel-rep">
+
+  <div class="card">
+    <h2 class="card-title"><span class="idx">1</span>仓库信息</h2>
+    <div class="field">
+      <label for="rep-repo">仓库链接</label>
+      <input type="text" id="rep-repo" data-field="rep.repo" placeholder="https://github.com/user/repo">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title"><span class="idx">2</span>环境配置</h2>
+    <div class="field">
+      <label for="rep-env-flow">流程</label>
+      <textarea id="rep-env-flow" data-field="rep.envFlow" rows="4" placeholder="如：conda create -n vla python=3.10；pip install -r requirements.txt"></textarea>
+    </div>
+    <div class="repeat-item" data-group="rep.error">
+      <div class="mini-row">
+        <input type="text" data-label="name" value="报错1" aria-label="报错名称">
+        <input type="text" data-label="sol" value="解决方案" aria-label="解决方案名称">
+      </div>
+      <textarea data-label="content" rows="2" placeholder="记录报错信息与解决办法"></textarea>
+    </div>
+    <div class="repeat-item" data-group="rep.error">
+      <div class="mini-row">
+        <input type="text" data-label="name" value="报错2" aria-label="报错名称">
+        <input type="text" data-label="sol" value="解决方案" aria-label="解决方案名称">
+      </div>
+      <textarea data-label="content" rows="2"></textarea>
+    </div>
+    <div class="repeat-item" data-group="rep.error">
+      <div class="mini-row">
+        <input type="text" data-label="name" value="报错3" aria-label="报错名称">
+        <input type="text" data-label="sol" value="解决方案" aria-label="解决方案名称">
+      </div>
+      <textarea data-label="content" rows="2"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title"><span class="idx">3</span>核心模块</h2>
+    <div class="repeat-item" data-group="rep.module">
+      <div class="mini-row">
+        <input type="text" data-label="name" value="模块1" aria-label="模块名称">
+        <input type="text" data-label="funcLabel" value="功能" aria-label="功能标签名称">
+      </div>
+      <div class="field">
+        <label>功能说明</label>
+        <textarea data-label="func" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label>代码</label>
+        <textarea class="code-area" data-label="code" rows="6"></textarea>
+      </div>
+    </div>
+    <div class="repeat-item" data-group="rep.module">
+      <div class="mini-row">
+        <input type="text" data-label="name" value="模块2" aria-label="模块名称">
+        <input type="text" data-label="funcLabel" value="功能" aria-label="功能标签名称">
+      </div>
+      <div class="field">
+        <label>功能说明</label>
+        <textarea data-label="func" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label>代码</label>
+        <textarea class="code-area" data-label="code" rows="6"></textarea>
+      </div>
+    </div>
+    <div class="repeat-item" data-group="rep.module">
+      <div class="mini-row">
+        <input type="text" data-label="name" value="模块3" aria-label="模块名称">
+        <input type="text" data-label="funcLabel" value="功能" aria-label="功能标签名称">
+      </div>
+      <div class="field">
+        <label>功能说明</label>
+        <textarea data-label="func" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label>代码</label>
+        <textarea class="code-area" data-label="code" rows="6"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title"><span class="idx">4</span>实验结果</h2>
+    <div class="field">
+      <label for="rep-result">实验结果</label>
+      <textarea id="rep-result" data-field="rep.result" rows="6" placeholder="记录复现得到的输出、指标与截图位置"></textarea>
+    </div>
+  </div>
+
+</section>
+
+</main>
+
+<!-- ===== 底部操作栏 ===== -->
+<div class="action-bar">
+  <div class="action-inner">
+    <button class="btn btn-ghost" id="btn-preview" type="button">预览</button>
+    <button class="btn btn-primary" id="btn-download-lit" type="button">下载文献笔记</button>
+    <button class="btn btn-primary" id="btn-download-rep" type="button">下载复现记录</button>
+    <button class="btn btn-plain" id="btn-download-all" type="button">一键下载全部</button>
+    <button class="btn btn-danger" id="btn-clear" type="button">清空</button>
+    <span class="save-state" id="save-state">尚未保存</span>
+  </div>
+</div>
+
+<!-- ===== 预览弹窗 ===== -->
+<div class="modal-mask" id="modal-mask">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">预览</h3>
+      <button class="modal-close" id="modal-close" type="button" aria-label="关闭">×</button>
+    </div>
+    <div class="preview-box" id="preview-box"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="modal-switch" type="button">切换另一份</button>
+      <button class="btn btn-primary" id="modal-download" type="button">下载此文件</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  var STORE_KEY = 'vla-note-generator-v1';
+
+  /* ---------- 工具函数 ---------- */
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+  // 单元格内容：转义并把换行转为 <br>
+  function cell(s){
+    return esc(s).replace(/\r?\n/g,'<br>');
+  }
+  // 标签名：为空时回退默认值
+  function label(v, fallback){
+    v = String(v == null ? '' : v).trim();
+    return v === '' ? fallback : v;
+  }
+  function fieldVal(name){
+    var el = document.querySelector('[data-field="'+name+'"]');
+    return el ? el.value : '';
+  }
+  function collectGroup(groupName){
+    var nodes = document.querySelectorAll('[data-group="'+groupName+'"]');
+    return Array.prototype.map.call(nodes, function(item){
+      var o = {};
+      Array.prototype.forEach.call(item.querySelectorAll('[data-label]'), function(el){
+        o[el.dataset.label] = el.value;
+      });
+      return o;
+    });
+  }
+  function segVal(name){
+    var box = document.querySelector('[data-seg="'+name+'"]');
+    if(!box) return '';
+    var checked = box.querySelector('input[type=radio]:checked');
+    return checked ? checked.value : '';
+  }
+  function checkMark(status, want){
+    return status === want ? '☑' : '☐';
+  }
+  function safeName(s){
+    return String(s).replace(/[\\/:*?"<>|]/g,'_').replace(/\s+/g,' ').trim().slice(0,60);
+  }
+
+  /* ---------- 生成：文献阅读笔记 ---------- */
+  function buildLit(){
+    var rel = collectGroup('lit.rel');
+    var methods = collectGroup('lit.method');
+    var exps = collectGroup('lit.exp');
+    var codeStatus = segVal('lit.codeStatus');
+    var figStatus = segVal('lit.figStatus');
+
+    var relRows = rel.map(function(r,i){
+      var head = i === 0 ? '    <td rowspan="'+rel.length+'" align="center">相关工作</td>\n' : '';
+      return '  <tr>\n' + head +
+        '    <td>'+cell(label(r.view,'观点'+(i+1)))+'</td>\n' +
+        '    <td>'+cell(label(r.ref,'文献条目'))+'</td>\n' +
+        '    <td colspan="3">'+cell(r.content)+'</td>\n' +
+        '  </tr>';
+    }).join('\n');
+
+    function methodBlock(m, i){
+      var nm = label(m.name,'新方法'+(i+1));
+      return '  <tr>\n' +
+        '    <td rowspan="2">'+cell(nm)+'</td>\n' +
+        '    <td>算法流程</td>\n' +
+        '    <td colspan="3">'+cell(m.algo)+'</td>\n' +
+        '  </tr>\n' +
+        '  <tr>\n' +
+        '    <td>原理推导</td>\n' +
+        '    <td colspan="3">'+cell(m.theory)+'</td>\n' +
+        '  </tr>';
+    }
+    var methodRows = methods.map(methodBlock).join('\n');
+
+    var expRows = exps.map(function(e,i){
+      return '  <tr>\n' +
+        '    <td>'+cell(label(e.view,'观点'+(i+1)))+'</td>\n' +
+        '    <td>'+cell(label(e.evidence,'证据'))+'</td>\n' +
+        '    <td colspan="3">'+cell(e.content)+'</td>\n' +
+        '  </tr>';
+    }).join('\n');
+
+    return '\n<table border="1" cellspacing="0" cellpadding="6" style="width:100%;border-collapse:collapse;font-size:14px;">\n' +
+      '  <tr>\n' +
+      '    <td colspan="6" align="center"><strong>文献阅读笔记模板</strong></td>\n' +
+      '  </tr>\n' +
+      '  <tr>\n' +
+      '    <td align="center" width="8%">标题</td>\n' +
+      '    <td colspan="5">'+cell(fieldVal('lit.title'))+'</td>\n' +
+      '  </tr>\n' +
+      '  <tr>\n' +
+      '    <td align="center">摘要复述</td>\n' +
+      '    <td colspan="5">'+cell(fieldVal('lit.abstract'))+'</td>\n' +
+      '  </tr>\n' +
+      '  <tr>\n' +
+      '    <td rowspan="3" align="center">引言</td>\n' +
+      '    <td>背景</td>\n' +
+      '    <td colspan="4">'+cell(fieldVal('lit.bg'))+'</td>\n' +
+      '  </tr>\n' +
+      '  <tr>\n' +
+      '    <td>问题</td>\n' +
+      '    <td colspan="4">'+cell(fieldVal('lit.prob'))+'</td>\n' +
+      '  </tr>\n' +
+      '  <tr>\n' +
+      '    <td>贡献</td>\n' +
+      '    <td colspan="4">'+cell(fieldVal('lit.contrib'))+'</td>\n' +
+      '  </tr>\n' +
+      (relRows ? relRows + '\n' : '') +
+      '  <tr>\n' +
+      '    <td rowspan="'+(1+methods.length*2)+'" align="center">方法</td>\n' +
+      '    <td>知识点</td>\n' +
+      '    <td colspan="4">'+cell(fieldVal('lit.kp'))+'</td>\n' +
+      '  </tr>\n' +
+      (methodRows ? methodRows + '\n' : '') +
+      '  <tr>\n' +
+      '    <td rowspan="'+(2+exps.length)+'" align="center">实验</td>\n' +
+      '    <td>指标</td>\n' +
+      '    <td colspan="4">'+cell(fieldVal('lit.metric'))+'</td>\n' +
+      '  </tr>\n' +
+      '  <tr>\n' +
+      '    <td>数据集</td>\n' +
+      '    <td colspan="4">'+cell(fieldVal('lit.dataset'))+'</td>\n' +
+      '  </tr>\n' +
+      (expRows ? expRows + '\n' : '') +
+      '  <tr>\n' +
+      '    <td rowspan="2" align="center">结论</td>\n' +
+      '    <td>创新点</td>\n' +
+      '    <td colspan="4">'+cell(fieldVal('lit.innov'))+'</td>\n' +
+      '  </tr>\n' +
+      '  <tr>\n' +
+      '    <td>不足</td>\n' +
+      '    <td colspan="4">'+cell(fieldVal('lit.limit'))+'</td>\n' +
+      '  </tr>\n' +
+      '  <tr>\n' +
+      '    <td align="center">未读文献</td>\n' +
+      '    <td colspan="5">'+cell(fieldVal('lit.unread'))+'</td>\n' +
+      '  </tr>\n' +
+      '  <tr>\n' +
+      '    <td align="center">代码</td>\n' +
+      '    <td colspan="3">'+cell(fieldVal('lit.codeLink'))+'</td>\n' +
+      '    <td>'+checkMark(codeStatus,'done')+' 已复现</td>\n' +
+      '    <td>'+checkMark(codeStatus,'undone')+' 未复现</td>\n' +
+      '  </tr>\n' +
+      '  <tr>\n' +
+      '    <td align="center">图</td>\n' +
+      '    <td colspan="3">'+cell(fieldVal('lit.figPath'))+'</td>\n' +
+      '    <td>'+checkMark(figStatus,'done')+' 已复现</td>\n' +
+      '    <td>'+checkMark(figStatus,'undone')+' 未复现</td>\n' +
+      '  </tr>\n' +
+      '</table>\n';
+  }
+
+  /* ---------- 生成：代码复现记录 ---------- */
+  function buildRep(){
+    var errors = collectGroup('rep.error');
+    var modules = collectGroup('rep.module');
+
+    var errorRows = errors.map(function(e,i){
+      return '  <tr>\n' +
+        '    <td>'+cell(label(e.name,'报错'+(i+1)))+'</td>\n' +
+        '    <td>'+cell(label(e.sol,'解决方案'))+'</td>\n' +
+        '    <td>'+cell(e.content)+'</td>\n' +
+        '  </tr>';
+    }).join('\n');
+
+    var moduleRows = modules.map(function(m,i){
+      var nm = label(m.name,'模块'+(i+1));
+      var head = i === 0 ? '    <td rowspan="'+(modules.length*2)+'" align="center">核心模块</td>\n' : '';
+      return '  <tr>\n' + head +
+        '    <td>'+cell(nm)+'</td>\n' +
+        '    <td>'+cell(label(m.funcLabel,'功能'))+'</td>\n' +
+        '    <td>'+cell(m.func)+'</td>\n' +
+        '  </tr>\n' +
+        '  <tr>\n' +
+        '    <td>代码</td>\n' +
+        '    <td colspan="2" style="height:60px;">'+cell(m.code)+'</td>\n' +
+        '  </tr>';
+    }).join('\n');
+
+    return '\n<table border="1" cellspacing="0" cellpadding="6" style="width:100%;border-collapse:collapse;font-size:14px;">\n' +
+      '  <tr>\n' +
+      '    <td colspan="4" align="center"><strong>代码复现记录</strong></td>\n' +
+      '  </tr>\n' +
+      '  <tr>\n' +
+      '    <td align="center" width="12%">仓库链接</td>\n' +
+      '    <td colspan="3">'+cell(fieldVal('rep.repo'))+'</td>\n' +
+      '  </tr>\n' +
+      '  <tr>\n' +
+      '    <td rowspan="'+(1+errors.length)+'" align="center">环境配置</td>\n' +
+      '    <td width="18%">流程</td>\n' +
+      '    <td colspan="2">'+cell(fieldVal('rep.envFlow'))+'</td>\n' +
+      '  </tr>\n' +
+      (errorRows ? errorRows + '\n' : '') +
+      (moduleRows ? moduleRows + '\n' : '') +
+      '  <tr>\n' +
+      '    <td align="center">实验结果</td>\n' +
+      '    <td colspan="3" style="height:120px;">'+cell(fieldVal('rep.result'))+'</td>\n' +
+      '  </tr>\n' +
+      '</table>\n';
+  }
+
+  /* ---------- 文件下载 ---------- */
+  function download(filename, content){
+    // 加 BOM，保证 Windows 下中文编码正确
+    var blob = new Blob(['\uFEFF'+content], {type:'text/markdown;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+  }
+  function litFileName(){
+    var t = safeName(fieldVal('lit.title'));
+    return t ? '文献阅读笔记-'+t+'.md' : '文献阅读笔记.md';
+  }
+  function downloadLit(){ download(litFileName(), buildLit()); }
+  function downloadRep(){ download('代码复现记录.md', buildRep()); }
+
+  /* ---------- Tab 切换 ---------- */
+  var activeKind = 'lit';
+  document.querySelectorAll('.tab-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      activeKind = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b === btn); });
+      document.querySelectorAll('.panel').forEach(function(p){
+        p.classList.toggle('active', p.id === 'panel-'+activeKind);
+      });
+    });
+  });
+
+  /* ---------- Toast ---------- */
+  var toastTimer = null;
+  function toast(msg){
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2600);
+  }
+
+  /* ---------- 预览弹窗 ---------- */
+  var previewKind = 'lit';
+  var mask = document.getElementById('modal-mask');
+  function renderPreview(){
+    var content = previewKind === 'lit' ? buildLit() : buildRep();
+    document.getElementById('modal-title').textContent = previewKind === 'lit' ? '预览：文献阅读笔记' : '预览：代码复现记录';
+    document.getElementById('preview-box').innerHTML = content;
+  }
+  function openPreview(kind){
+    previewKind = kind || activeKind;
+    renderPreview();
+    mask.classList.add('show');
+  }
+  document.getElementById('btn-preview').addEventListener('click', function(){ openPreview(activeKind); });
+  document.getElementById('modal-close').addEventListener('click', function(){ mask.classList.remove('show'); });
+  mask.addEventListener('click', function(e){ if(e.target === mask) mask.classList.remove('show'); });
+  document.getElementById('modal-switch').addEventListener('click', function(){
+    previewKind = previewKind === 'lit' ? 'rep' : 'lit';
+    renderPreview();
+  });
+  document.getElementById('modal-download').addEventListener('click', function(){
+    if(previewKind === 'lit') downloadLit(); else downloadRep();
+  });
+
+  /* ---------- 按钮绑定 ---------- */
+  document.getElementById('btn-download-lit').addEventListener('click', function(){
+    downloadLit();
+    toast('已生成「'+litFileName()+'」');
+  });
+  document.getElementById('btn-download-rep').addEventListener('click', function(){
+    downloadRep();
+    toast('已生成「代码复现记录.md」');
+  });
+  document.getElementById('btn-download-all').addEventListener('click', function(){
+    downloadLit();
+    setTimeout(downloadRep, 300);
+    toast('正在生成两个文件，若浏览器拦截请允许本站下载多个文件');
+  });
+  document.getElementById('btn-clear').addEventListener('click', function(){
+    if(!window.confirm('确定清空全部内容吗？此操作不可恢复。')) return;
+    document.querySelectorAll('input[type=text],textarea').forEach(function(el){ el.value = ''; });
+    setSeg('lit.codeStatus','');
+    setSeg('lit.figStatus','');
+    try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+    document.getElementById('save-state').textContent = '已清空';
+    toast('内容已清空');
+  });
+  function setSeg(name, val){
+    var box = document.querySelector('[data-seg="'+name+'"]');
+    if(!box) return;
+    Array.prototype.forEach.call(box.querySelectorAll('input[type=radio]'), function(r){
+      r.checked = (r.value === val);
+    });
+  }
+
+  /* ---------- 重复组动态增删 ---------- */
+  var GROUP_CFG = {
+    'lit.rel':    {addText:'添加一组观点', counted:{view:'观点'}},
+    'lit.method': {addText:'添加一个新方法', counted:{name:'新方法'}},
+    'lit.exp':    {addText:'添加一组观点', counted:{view:'观点'}},
+    'rep.error':  {addText:'添加一条报错', counted:{name:'报错'}},
+    'rep.module': {addText:'添加一个核心模块', counted:{name:'模块'}}
+  };
+  var groupTemplates = {};
+  var addBtnRefs = {};
+
+  function attachDel(item){
+    var del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'del-btn';
+    del.title = '删除此组';
+    del.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 7h16M9 7V5h6v2m-8 0 1 13h8l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    del.addEventListener('click', function(){
+      item.parentNode.removeChild(item);
+      scheduleSave();
+    });
+    item.appendChild(del);
+  }
+
+  function addItem(groupName){
+    var cfg = GROUP_CFG[groupName];
+    var count = document.querySelectorAll('[data-group="'+groupName+'"]').length;
+    var node = groupTemplates[groupName].cloneNode(true);
+    // 清空待填内容
+    node.querySelectorAll('input[type=text],textarea').forEach(function(el){ el.value = ''; });
+    // 递增标签（观点4、新方法4、报错4、模块4…）
+    Object.keys(cfg.counted).forEach(function(lb){
+      var el = node.querySelector('[data-label="'+lb+'"]');
+      if(el) el.value = cfg.counted[lb] + (count+1);
+    });
+    attachDel(node);
+    var card = addBtnRefs[groupName].closest('.card');
+    card.insertBefore(node, addBtnRefs[groupName]);
+    scheduleSave();
+  }
+
+  function initDynamicGroups(){
+    // 先保存干净模板（不含删除按钮），删光后仍可重新添加
+    Object.keys(GROUP_CFG).forEach(function(gn){
+      var first = document.querySelector('[data-group="'+gn+'"]');
+      if(first) groupTemplates[gn] = first.cloneNode(true);
+    });
+    // 现有项挂删除按钮
+    document.querySelectorAll('.repeat-item').forEach(function(item){ attachDel(item); });
+    // 各卡片注入添加按钮
+    document.querySelectorAll('.repeat-item').forEach(function(item){
+      var gn = item.dataset.group;
+      if(addBtnRefs[gn]) return;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'add-btn';
+      btn.textContent = GROUP_CFG[gn].addText;
+      btn.addEventListener('click', (function(name){
+        return function(){ addItem(name); };
+      })(gn));
+      item.closest('.card').appendChild(btn);
+      addBtnRefs[gn] = btn;
+    });
+  }
+
+  /* ---------- 本地草稿自动保存 ---------- */
+  function collectAll(){
+    var data = {v:1, fields:{}, groups:{}, segs:{}};
+    document.querySelectorAll('[data-field]').forEach(function(el){
+      data.fields[el.dataset.field] = el.value;
+    });
+    document.querySelectorAll('[data-group]').forEach(function(item, idx){
+      var key = item.dataset.group + '#' + idx;
+      var o = {};
+      item.querySelectorAll('[data-label]').forEach(function(el){ o[el.dataset.label] = el.value; });
+      data.groups[key] = o;
+    });
+    document.querySelectorAll('[data-seg]').forEach(function(box){
+      var checked = box.querySelector('input[type=radio]:checked');
+      data.segs[box.dataset.seg] = checked ? checked.value : '';
+    });
+    return data;
+  }
+  var saveTimer = null;
+  function scheduleSave(){
+    var state = document.getElementById('save-state');
+    state.textContent = '保存中…';
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){
+      try{
+        localStorage.setItem(STORE_KEY, JSON.stringify(collectAll()));
+        var d = new Date();
+        var hh = String(d.getHours()).padStart(2,'0');
+        var mm = String(d.getMinutes()).padStart(2,'0');
+        document.getElementById('save-state').textContent = '草稿已自动保存 '+hh+':'+mm;
+      }catch(e){
+        document.getElementById('save-state').textContent = '保存失败（存储空间不足）';
+      }
+    }, 400);
+  }
+  document.addEventListener('input', scheduleSave);
+  document.addEventListener('change', scheduleSave);
+
+  function restore(){
+    var raw = null;
+    try{ raw = localStorage.getItem(STORE_KEY); }catch(e){ return; }
+    if(!raw) return;
+    var data;
+    try{ data = JSON.parse(raw); }catch(e){ return; }
+    if(data.fields){
+      Object.keys(data.fields).forEach(function(k){
+        var el = document.querySelector('[data-field="'+k+'"]');
+        if(el) el.value = data.fields[k];
+      });
+    }
+    if(data.groups){
+      document.querySelectorAll('[data-group]').forEach(function(item, idx){
+        var o = data.groups[item.dataset.group + '#' + idx];
+        if(!o) return;
+        item.querySelectorAll('[data-label]').forEach(function(el){
+          if(Object.prototype.hasOwnProperty.call(o, el.dataset.label)) el.value = o[el.dataset.label];
+        });
+      });
+    }
+    if(data.segs){
+      Object.keys(data.segs).forEach(function(k){ setSeg(k, data.segs[k]); });
+    }
+    document.getElementById('save-state').textContent = '已恢复上次草稿';
+  }
+  initDynamicGroups();
+  restore();
+})();
+</script>
+</body>
+</html>
